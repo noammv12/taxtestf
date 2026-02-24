@@ -76,6 +76,7 @@ export default function TaxReportDetailPage() {
         { key: 'monthly', label: 'Monthly Breakdown' },
         { key: 'fees', label: 'Fee Analysis' },
         { key: 'walkthrough', label: 'Tax Calculation' },
+        { key: 'form867', label: 'Form 867' },
         { key: 'compliance', label: 'Compliance' },
         { key: 'approval', label: 'Approval' },
     ];
@@ -438,6 +439,233 @@ export default function TaxReportDetailPage() {
                             </table>
                         </div>
                     </>
+                )}
+
+                {/* ═══ FORM 867 PREVIEW TAB ═══ */}
+                {activeTab === 'form867' && (
+                    <div className="animate-fade-in">
+                        {/* Form Header */}
+                        <div className="card mb-md" style={{ padding: '28px 32px', borderTop: '4px solid var(--accent)' }}>
+                            <div className="flex justify-between items-center mb-md">
+                                <div>
+                                    <div className="text-xs text-muted" style={{ textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Israel Tax Authority</div>
+                                    <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 2 }}>Form 867 — Tax Deduction Confirmation</h2>
+                                    <div className="text-sm text-muted">טופס 867 — אישור על ניכוי מס</div>
+                                </div>
+                                <button className="btn btn-primary" onClick={() => window.print()} style={{ gap: 8, display: 'flex', alignItems: 'center' }}>
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2M6 14h12v8H6z" /></svg>
+                                    Print Form 867
+                                </button>
+                            </div>
+                            <div className="flex gap-lg" style={{ borderTop: '1px solid var(--border-secondary)', paddingTop: 16 }}>
+                                <div>
+                                    <div className="text-xs text-muted" style={{ textTransform: 'uppercase', marginBottom: 2 }}>Tax Year</div>
+                                    <div className="font-bold" style={{ fontSize: 18 }}>{cs?.tax_year}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-muted" style={{ textTransform: 'uppercase', marginBottom: 2 }}>Report Period</div>
+                                    <div className="font-bold">{cs?.report_period}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-muted" style={{ textTransform: 'uppercase', marginBottom: 2 }}>Issue Date</div>
+                                    <div className="font-bold">{new Date().toLocaleDateString('en-GB')}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-muted" style={{ textTransform: 'uppercase', marginBottom: 2 }}>Status</div>
+                                    <StateBadge state={report.status} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 1: Taxpayer Identity */}
+                        <div className="card mb-md">
+                            <div className="text-xs font-bold" style={{ color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Section 1 — Taxpayer Identity</div>
+                            <div className="metrics-grid" style={{ marginBottom: 0, gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                                <div>
+                                    <div className="text-xs text-muted" style={{ marginBottom: 4 }}>Full Name</div>
+                                    <div className="font-bold" style={{ fontSize: 16 }}>{cs?.client_name || report.client_name}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-muted" style={{ marginBottom: 4 }}>Account Number</div>
+                                    <div className="font-mono font-bold" style={{ fontSize: 16 }}>{cs?.account_id}</div>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-muted" style={{ marginBottom: 4 }}>Tax Jurisdiction</div>
+                                    <div className="font-bold" style={{ fontSize: 16 }}>{td?.report_metadata?.tax_jurisdiction || 'Israel'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Section 2: Income Summary */}
+                        <div className="card mb-md">
+                            <div className="text-xs font-bold" style={{ color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Section 2 — Income from Securities (Capital Gains)</div>
+                            <table style={{ width: '100%' }}>
+                                <tbody>
+                                    {[
+                                        { label: 'Gross Trading Income (Capital Gains)', value: as?.gross_trading_pnl, bold: false },
+                                        { label: 'Less: Deductible Expenses (Trading Fees)', value: -(as?.total_deductible_fees || 0), bold: false },
+                                        { label: 'Net Taxable Income', value: as?.net_taxable_pnl, bold: true, border: true },
+                                    ].map((row, i) => (
+                                        <tr key={i} style={{ borderTop: row.border ? '2px solid var(--border-secondary)' : undefined }}>
+                                            <td style={{ padding: '10px 0', fontSize: 14, fontWeight: row.bold ? 700 : 400 }}>{row.label}</td>
+                                            <td className="font-mono" style={{ padding: '10px 0', textAlign: 'right', fontSize: row.bold ? 16 : 14, fontWeight: row.bold ? 700 : 400, color: row.bold ? (row.value > 0 ? 'var(--positive)' : 'var(--negative)') : undefined }}>
+                                                {fmt(row.value)}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Section 3: Tax Computation */}
+                        <div className="card mb-md">
+                            <div className="text-xs font-bold" style={{ color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Section 3 — Tax Computation</div>
+                            <table style={{ width: '100%' }}>
+                                <tbody>
+                                    <tr>
+                                        <td style={{ padding: '10px 0', fontSize: 14 }}>Applicable Tax Rate</td>
+                                        <td className="font-mono font-bold" style={{ padding: '10px 0', textAlign: 'right', fontSize: 14 }}>25%</td>
+                                    </tr>
+                                    <tr>
+                                        <td style={{ padding: '10px 0', fontSize: 14 }}>Legal Basis</td>
+                                        <td style={{ padding: '10px 0', textAlign: 'right', fontSize: 13, color: 'var(--text-secondary)' }}>
+                                            {td?.report_metadata?.applicable_law || 'Israeli Income Tax Ordinance, Section 91'}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td style={{ padding: '10px 0', fontSize: 14 }}>Effective Tax Rate</td>
+                                        <td className="font-mono font-bold" style={{ padding: '10px 0', textAlign: 'right', fontSize: 14 }}>{as?.effective_tax_rate}%</td>
+                                    </tr>
+                                    <tr style={{ borderTop: '2px solid var(--border-secondary)' }}>
+                                        <td style={{ padding: '12px 0', fontSize: 16, fontWeight: 800 }}>Tax Liability Due</td>
+                                        <td className="font-mono" style={{ padding: '12px 0', textAlign: 'right', fontSize: 22, fontWeight: 800, color: 'var(--accent)' }}>
+                                            {fmt(as?.computed_tax_liability)}
+                                        </td>
+                                    </tr>
+                                    {!as?.is_profit_year && (
+                                        <tr>
+                                            <td colSpan={2} style={{ padding: '12px 0' }}>
+                                                <div style={{ background: 'var(--accent-soft)', borderRadius: 'var(--radius-sm)', padding: '12px 16px' }}>
+                                                    <div className="font-bold text-sm" style={{ color: 'var(--accent)', marginBottom: 4 }}>Loss Year — No Tax Due</div>
+                                                    <div className="text-xs" style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                                                        Net loss of {fmt(as?.net_taxable_pnl)} eligible for carry-forward under Section 92 of the Israeli Income Tax Ordinance.
+                                                        This loss may be offset against future capital gains indefinitely.
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Section 4: Deductible Expenses Detail */}
+                        <div className="card mb-md">
+                            <div className="text-xs font-bold" style={{ color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Section 4 — Deductible Expenses</div>
+                            <table style={{ width: '100%' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '1px solid var(--border-secondary)' }}>
+                                        <th style={{ padding: '8px 0', fontSize: 12, textAlign: 'left', color: 'var(--text-secondary)', fontWeight: 600 }}>Expense Type</th>
+                                        <th style={{ padding: '8px 0', fontSize: 12, textAlign: 'right', color: 'var(--text-secondary)', fontWeight: 600 }}>Amount (USD)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[
+                                        { label: 'Broker Commissions', key: 'commissions' },
+                                        { label: 'SEC Regulatory Fee', key: 'sec_fee' },
+                                        { label: 'NASD/FINRA Fee', key: 'nasd_fee' },
+                                        { label: 'ECN Liquidity Removal Fee', key: 'ecn_take' },
+                                        { label: 'ECN Liquidity Provision Fee', key: 'ecn_add' },
+                                        { label: 'Order Routing Fee', key: 'routing_fee' },
+                                        { label: 'NSCC Clearing Fee', key: 'nscc_fee' },
+                                    ].filter(f => (fs?.[f.key] || 0) !== 0).map(fee => (
+                                        <tr key={fee.key}>
+                                            <td style={{ padding: '8px 0', fontSize: 14 }}>{fee.label}</td>
+                                            <td className="font-mono" style={{ padding: '8px 0', textAlign: 'right', fontSize: 14 }}>{fmt(fs?.[fee.key])}</td>
+                                        </tr>
+                                    ))}
+                                    <tr style={{ borderTop: '2px solid var(--border-secondary)' }}>
+                                        <td style={{ padding: '10px 0', fontSize: 14, fontWeight: 700 }}>Total Deductible Expenses</td>
+                                        <td className="font-mono font-bold" style={{ padding: '10px 0', textAlign: 'right', fontSize: 16 }}>{fmt(fs?.total)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style={{ padding: '8px 0', fontSize: 13, color: 'var(--positive)' }}>Tax Saved via Deductions (25%)</td>
+                                        <td className="font-mono font-bold" style={{ padding: '8px 0', textAlign: 'right', fontSize: 14, color: 'var(--positive)' }}>{fmt((fs?.total || 0) * 0.25)}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Section 5: Monthly Withholding Schedule */}
+                        <div className="card mb-md">
+                            <div className="text-xs font-bold" style={{ color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Section 5 — Monthly Tax Withholding Schedule</div>
+                            <div className="table-scroll">
+                                <table>
+                                    <thead>
+                                        <tr style={{ borderBottom: '1px solid var(--border-secondary)' }}>
+                                            <th style={{ padding: '8px 0', fontSize: 12, textAlign: 'left' }}>Period</th>
+                                            <th style={{ padding: '8px 0', fontSize: 12, textAlign: 'right' }}>Gross P&L</th>
+                                            <th style={{ padding: '8px 0', fontSize: 12, textAlign: 'right' }}>Fees</th>
+                                            <th style={{ padding: '8px 0', fontSize: 12, textAlign: 'right' }}>Net P&L</th>
+                                            <th style={{ padding: '8px 0', fontSize: 12, textAlign: 'right' }}>Tax Withheld</th>
+                                            <th style={{ padding: '8px 0', fontSize: 12, textAlign: 'right' }}>Cumulative Tax</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {monthlyWithholding.map((m, i) => (
+                                            <tr key={i} style={{ borderBottom: '1px solid var(--bg-tertiary)' }}>
+                                                <td style={{ padding: '8px 0', fontSize: 13 }}>{m.trade_date}</td>
+                                                <td className="font-mono" style={{ padding: '8px 0', textAlign: 'right', fontSize: 13 }}>{fmt(m.gross_pnl)}</td>
+                                                <td className="font-mono text-muted" style={{ padding: '8px 0', textAlign: 'right', fontSize: 13 }}>{fmt(m.fees)}</td>
+                                                <td className="font-mono" style={{ padding: '8px 0', textAlign: 'right', fontSize: 13, color: m.net_pnl > 0 ? 'var(--positive)' : m.net_pnl < 0 ? 'var(--negative)' : undefined }}>
+                                                    {fmt(m.net_pnl)}
+                                                </td>
+                                                <td className="font-mono font-bold" style={{ padding: '8px 0', textAlign: 'right', fontSize: 13, color: m.monthly_tax > 0 ? 'var(--accent)' : undefined }}>
+                                                    {m.monthly_tax > 0 ? fmt(m.monthly_tax) : '—'}
+                                                </td>
+                                                <td className="font-mono font-bold" style={{ padding: '8px 0', textAlign: 'right', fontSize: 13, color: 'var(--accent)' }}>
+                                                    {fmt(m.cumulative_tax)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                    <tfoot>
+                                        <tr style={{ borderTop: '2px solid var(--border-secondary)' }}>
+                                            <td style={{ padding: '10px 0', fontWeight: 700, fontSize: 14 }}>Annual Total</td>
+                                            <td className="font-mono" style={{ padding: '10px 0', textAlign: 'right', fontWeight: 700 }}>{fmt(as?.gross_trading_pnl)}</td>
+                                            <td className="font-mono text-muted" style={{ padding: '10px 0', textAlign: 'right' }}>{fmt(as?.total_deductible_fees)}</td>
+                                            <td className="font-mono font-bold" style={{ padding: '10px 0', textAlign: 'right', color: as?.net_taxable_pnl > 0 ? 'var(--positive)' : 'var(--negative)' }}>{fmt(as?.net_taxable_pnl)}</td>
+                                            <td className="font-mono font-bold" style={{ padding: '10px 0', textAlign: 'right', color: 'var(--accent)' }}>{fmt(as?.computed_tax_liability)}</td>
+                                            <td className="font-mono font-bold" style={{ padding: '10px 0', textAlign: 'right', color: 'var(--accent)', fontSize: 16 }}>{fmt(as?.computed_tax_liability)}</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Section 6: Certification */}
+                        <div className="card" style={{ borderTop: '4px solid var(--accent)' }}>
+                            <div className="text-xs font-bold" style={{ color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Certification</div>
+                            <p className="text-sm" style={{ color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
+                                This document confirms the tax deduction calculation for the above taxpayer for the tax year {cs?.tax_year}.
+                                All figures are derived from verified source data (P&L reports) submitted by the financial institution.
+                                Trading expenses have been verified and deducted in accordance with Israeli tax law.
+                                Tax computation follows Section 91 of the Israeli Income Tax Ordinance at the standard rate of 25% on net capital gains.
+                            </p>
+                            <div className="grid-2 mt-md" style={{ gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                                <div style={{ borderTop: '1px solid var(--border-secondary)', paddingTop: 12 }}>
+                                    <div className="text-xs text-muted" style={{ marginBottom: 4 }}>Prepared by</div>
+                                    <div className="font-bold">Clearly Tax Operations Platform</div>
+                                    <div className="text-xs text-muted">Automated tax clearing system</div>
+                                </div>
+                                <div style={{ borderTop: '1px solid var(--border-secondary)', paddingTop: 12 }}>
+                                    <div className="text-xs text-muted" style={{ marginBottom: 4 }}>Report Reference</div>
+                                    <div className="font-mono text-sm">{report.id}</div>
+                                    <div className="text-xs text-muted">Version {report.version} · Generated {new Date(report.generated_at).toLocaleDateString('en-GB')}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 )}
 
                 {/* ═══ APPROVAL TAB ═══ */}
