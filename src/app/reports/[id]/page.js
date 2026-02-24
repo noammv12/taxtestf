@@ -80,6 +80,14 @@ export default function TaxReportDetailPage() {
         { key: 'approval', label: 'Approval' },
     ];
 
+    // Compute monthly withholding
+    const monthlyWithholding = mb.map(m => {
+        const taxable = m.net_pnl > 0 ? m.net_pnl : 0;
+        return { ...m, monthly_tax: taxable * 0.25, cumulative_tax: 0 };
+    });
+    let runTax = 0;
+    monthlyWithholding.forEach(m => { runTax += m.monthly_tax; m.cumulative_tax = runTax; });
+
     return (
         <AppShell>
             <div className="page-container">
@@ -87,7 +95,7 @@ export default function TaxReportDetailPage() {
                 <div className="page-header">
                     <div>
                         <div className="flex items-center gap-md mb-sm">
-                            <Link href="/reports" className="btn btn-secondary" style={{ padding: '4px 14px', fontSize: 13 }}>← Back</Link>
+                            <Link href="/reports" className="btn btn-secondary" style={{ padding: '4px 14px', fontSize: 13 }}>Back</Link>
                             <span className="font-mono text-muted text-sm">{report.id}</span>
                             <StateBadge state={report.status} />
                         </div>
@@ -203,8 +211,8 @@ export default function TaxReportDetailPage() {
                 {activeTab === 'monthly' && (
                     <div className="table-container animate-fade-in">
                         <div className="table-header">
-                            <h3>Monthly P&L Breakdown</h3>
-                            <span className="text-sm text-muted">Detailed monthly trading performance with cumulative YTD totals</span>
+                            <h3>Monthly P&L &amp; Tax Withholding</h3>
+                            <span className="text-sm text-muted">Form 867 precursor — monthly withholding at 25%</span>
                         </div>
                         <div className="table-scroll">
                             <table>
@@ -214,25 +222,29 @@ export default function TaxReportDetailPage() {
                                         <th className="number">Gross P&L</th>
                                         <th className="number">Fees</th>
                                         <th className="number">Net P&L</th>
-                                        <th className="number">Net Cash</th>
+                                        <th className="number">Tax (25%)</th>
                                         <th className="number">YTD P&L</th>
-                                        <th>Status</th>
+                                        <th className="number">YTD Tax</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {mb.map((m, i) => (
+                                    {monthlyWithholding.map((m, i) => (
                                         <tr key={i}>
                                             <td className="font-bold">{m.trade_date}</td>
                                             <td className="number font-mono">{fmt(m.gross_pnl)}</td>
                                             <td className="number font-mono text-muted">{fmt(m.fees)}</td>
-                                            <td className={`number font-mono font-bold ${m.net_pnl > 0 ? 'positive' : ''}`} style={{ color: m.net_pnl < 0 ? 'var(--negative)' : undefined }}>
+                                            <td className="number font-mono font-bold" style={{ color: m.net_pnl > 0 ? 'var(--positive)' : m.net_pnl < 0 ? 'var(--negative)' : undefined }}>
                                                 {fmt(m.net_pnl)}
                                             </td>
-                                            <td className="number font-mono text-muted">{fmt(m.net_cash)}</td>
-                                            <td className={`number font-mono font-bold ${m.cumulative_pnl > 0 ? 'positive' : ''}`} style={{ color: m.cumulative_pnl < 0 ? 'var(--negative)' : undefined }}>
+                                            <td className="number font-mono font-bold" style={{ color: m.monthly_tax > 0 ? 'var(--accent)' : undefined }}>
+                                                {m.monthly_tax > 0 ? fmt(m.monthly_tax) : '—'}
+                                            </td>
+                                            <td className="number font-mono font-bold" style={{ color: m.cumulative_pnl > 0 ? 'var(--positive)' : m.cumulative_pnl < 0 ? 'var(--negative)' : undefined }}>
                                                 {fmt(m.cumulative_pnl)}
                                             </td>
-                                            <td><StateBadge state={m.is_profit ? 'SUCCESS' : m.is_loss ? 'FAILED' : 'SKIPPED'} /></td>
+                                            <td className="number font-mono font-bold" style={{ color: 'var(--accent)' }}>
+                                                {fmt(m.cumulative_tax)}
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -242,9 +254,9 @@ export default function TaxReportDetailPage() {
                                         <td className="number font-mono">{fmt(as?.gross_trading_pnl)}</td>
                                         <td className="number font-mono text-muted">{fmt(as?.total_deductible_fees)}</td>
                                         <td className="number font-mono font-bold" style={{ color: as?.net_taxable_pnl > 0 ? 'var(--positive)' : 'var(--negative)' }}>{fmt(as?.net_taxable_pnl)}</td>
-                                        <td className="number font-mono text-muted">—</td>
+                                        <td className="number font-mono font-bold" style={{ color: 'var(--accent)' }}>{fmt(as?.computed_tax_liability)}</td>
                                         <td className="number font-mono font-bold" style={{ color: as?.net_taxable_pnl > 0 ? 'var(--positive)' : 'var(--negative)' }}>{fmt(as?.net_taxable_pnl)}</td>
-                                        <td></td>
+                                        <td className="number font-mono font-bold" style={{ color: 'var(--accent)', fontSize: 15 }}>{fmt(as?.computed_tax_liability)}</td>
                                     </tr>
                                 </tfoot>
                             </table>
