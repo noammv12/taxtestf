@@ -31,6 +31,10 @@ export default function StateBadge({ state, size = 'normal' }) {
         'RESOLVED': { className: 'badge-validated', label: 'RESOLVED', icon: '✓' },
         'ACTIVE': { className: 'badge-success', label: 'ACTIVE', icon: '●' },
         'RECONCILIATION_WARNING': { className: 'badge-mismatch', label: 'RECON WARN', icon: '!' },
+        'DRAFT': { className: 'badge-partial', label: 'DRAFT', icon: '●' },
+        'APPROVED': { className: 'badge-success', label: 'APPROVED', icon: '✓' },
+        'REJECTED': { className: 'badge-error', label: 'REJECTED', icon: '✕' },
+        'NEEDS_REVIEW': { className: 'badge-review', label: 'REVIEW', icon: '!' },
     };
 
     const config = stateMap[state] || { className: 'badge-duplicate', label: state || '—', icon: '?' };
