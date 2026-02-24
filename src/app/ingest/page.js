@@ -117,7 +117,7 @@ export default function IngestPage() {
                         <div className="section-header">
                             <h3 style={{ fontSize: 14 }}>Report Payload (JSON)</h3>
                             <button className="btn btn-secondary btn-sm" onClick={() => setJsonInput(SAMPLE_PAYLOAD)}>
-                                ↻ Load Sample
+                                Load Sample
                             </button>
                         </div>
                         <textarea
@@ -129,7 +129,7 @@ export default function IngestPage() {
                         />
                         <div style={{ marginTop: 12 }}>
                             <button className="btn btn-primary" onClick={handleIngest} disabled={loading}>
-                                {loading ? <><div className="spinner" style={{ width: 14, height: 14 }}></div> Processing...</> : '📥 Ingest Report'}
+                                {loading ? <><div className="spinner" style={{ width: 14, height: 14 }}></div> Processing...</> : 'Ingest Report'}
                             </button>
                         </div>
                     </div>
@@ -146,7 +146,9 @@ export default function IngestPage() {
 
                         {!result && !error && (
                             <div className="card" style={{ textAlign: 'center', padding: 60, color: 'var(--text-muted)' }}>
-                                <div style={{ fontSize: 40, marginBottom: 12 }}>📄</div>
+                                <div style={{ marginBottom: 16 }}>
+                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                                </div>
                                 <div>Paste a Colmex P&L report payload and click Ingest</div>
                             </div>
                         )}
@@ -167,56 +169,58 @@ export default function IngestPage() {
                                 {/* Pipeline Steps */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                     {/* Client Resolution */}
-                                    <div className="card" style={{ padding: 14 }}>
+                                    <div className="card" style={{ padding: 14, marginBottom: 0 }}>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-sm font-bold">👤 Client Resolution</span>
+                                            <span className="text-sm font-bold">Client Resolution</span>
                                             <StateBadge state={result.steps?.client_resolution?.action} />
                                         </div>
                                     </div>
 
                                     {/* Report Classification */}
-                                    <div className="card" style={{ padding: 14 }}>
+                                    <div className="card" style={{ padding: 14, marginBottom: 0 }}>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-sm font-bold">📋 Report Classification</span>
+                                            <span className="text-sm font-bold">Report Classification</span>
                                             <StateBadge state={result.steps?.report_classification?.state} />
                                         </div>
                                         <div className="text-xs text-muted mt-sm font-mono">Hash: {result.steps?.report_classification?.payloadHash?.substring(0, 12)}...</div>
                                     </div>
 
                                     {/* Validation */}
-                                    <div className="card" style={{ padding: 14 }}>
+                                    <div className="card" style={{ padding: 14, marginBottom: 0 }}>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-sm font-bold">✓ Validation</span>
+                                            <span className="text-sm font-bold">Validation</span>
                                             <StateBadge state={result.steps?.validation?.status} />
                                         </div>
                                         {result.steps?.validation?.exceptions?.length > 0 && (
-                                            <div className="text-xs mt-sm" style={{ color: 'var(--error)' }}>
+                                            <div className="text-xs mt-sm" style={{ color: 'var(--state-error)' }}>
                                                 {result.steps.validation.exceptions.length} exception(s)
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Reconciliation */}
-                                    <div className="card" style={{ padding: 14 }}>
+                                    <div className="card" style={{ padding: 14, marginBottom: 0 }}>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-sm font-bold">⚖️ Reconciliation</span>
+                                            <span className="text-sm font-bold">Reconciliation</span>
                                             <StateBadge state={result.steps?.reconciliation?.status} />
                                         </div>
                                     </div>
 
                                     {/* Tax-Cleaned */}
-                                    <div className="card" style={{ padding: 14 }}>
+                                    <div className="card" style={{ padding: 14, marginBottom: 0 }}>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-sm font-bold">✦ Tax-Cleaned</span>
+                                            <span className="text-sm font-bold">Tax-Cleaned</span>
                                             <StateBadge state={result.steps?.tax_cleaned?.status} />
                                         </div>
                                     </div>
 
                                     {/* Storage */}
-                                    <div className="card" style={{ padding: 14 }}>
+                                    <div className="card" style={{ padding: 14, marginBottom: 0 }}>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-sm font-bold">💾 Stored</span>
-                                            <span className="text-sm">{result.steps?.storage?.stored ? '✅ Yes' : '⊘ No'}</span>
+                                            <span className="text-sm font-bold">Stored</span>
+                                            <span className="text-sm font-bold" style={{ color: result.steps?.storage?.stored ? 'var(--state-success)' : 'var(--state-duplicate)' }}>
+                                                {result.steps?.storage?.stored ? 'Yes' : 'No'}
+                                            </span>
                                         </div>
                                         {result.steps?.storage?.reportId && (
                                             <div className="text-xs text-muted mt-sm font-mono">{result.steps.storage.reportId} (v{result.steps.storage.version})</div>

@@ -38,9 +38,9 @@ export default function ExceptionsPage() {
     const resolvedCount = exceptions.filter(e => e.status === 'RESOLVED').length;
 
     const severityIcon = (sev) => {
-        if (sev === 'HIGH') return '🔴';
-        if (sev === 'MEDIUM') return '🟡';
-        return '🟢';
+        if (sev === 'HIGH') return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--state-error)', marginRight: 6 }}></span>;
+        if (sev === 'MEDIUM') return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--state-revision)', marginRight: 6 }}></span>;
+        return <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', backgroundColor: 'var(--state-success)', marginRight: 6 }}></span>;
     };
 
     return (
@@ -66,22 +66,18 @@ export default function ExceptionsPage() {
                             <div className="metric-card danger">
                                 <div className="metric-label">Open</div>
                                 <div className="metric-value">{openCount}</div>
-                                <div className="metric-icon">⚠️</div>
                             </div>
                             <div className="metric-card success">
                                 <div className="metric-label">Resolved</div>
                                 <div className="metric-value">{resolvedCount}</div>
-                                <div className="metric-icon">✓</div>
                             </div>
                             <div className="metric-card accent">
                                 <div className="metric-label">Total</div>
                                 <div className="metric-value">{exceptions.length}</div>
-                                <div className="metric-icon">📋</div>
                             </div>
                             <div className="metric-card warning">
                                 <div className="metric-label">High Severity</div>
                                 <div className="metric-value">{exceptions.filter(e => e.severity === 'HIGH' && e.status === 'OPEN').length}</div>
-                                <div className="metric-icon">🔴</div>
                             </div>
                         </div>
 
@@ -100,7 +96,7 @@ export default function ExceptionsPage() {
                             <div key={exc.id} className="exception-card animate-fade-in">
                                 <div className="exception-card-header">
                                     <div className="flex gap-sm items-center">
-                                        <span>{severityIcon(exc.severity)}</span>
+                                        {severityIcon(exc.severity)}
                                         <span className="exception-card-id">{exc.id}</span>
                                         <StateBadge state={exc.type?.includes('MISMATCH') ? 'MISMATCH' : exc.type?.includes('CONFLICT') ? 'CONFLICT' : exc.type?.includes('PARSE') ? 'FAILED' : exc.type?.includes('PERIOD') ? 'REVIEW_REQUIRED' : exc.type?.includes('MISSING') ? 'FAILED' : 'REVIEW_REQUIRED'} />
                                         <span className="text-xs font-mono" style={{ color: 'var(--accent)' }}>{exc.account_id}</span>

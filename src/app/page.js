@@ -44,10 +44,10 @@ export default function BatchDashboard() {
 
         {!batchResults && !loading && (
           <div className="batch-hero animate-fade-in">
-            <h2>🚀 Run the 50-Scenario Demo Pack</h2>
+            <h2>Run the 50-Scenario Demo Pack</h2>
             <p>Process all scenarios through the complete pipeline: ingestion → client upsert → classification → validation → reconciliation → tax-cleaned generation</p>
             <button className="btn btn-primary btn-lg" onClick={runBatch}>
-              ⚡ Run Batch Processing
+              Run Batch Processing
             </button>
           </div>
         )}
@@ -73,8 +73,8 @@ export default function BatchDashboard() {
             <div className="section-header">
               <h2>Processing Summary</h2>
               <div className="flex gap-sm">
-                <button className="btn btn-secondary btn-sm" onClick={resetSystem}>↻ Reset & Clear</button>
-                <button className="btn btn-primary btn-sm" onClick={runBatch} disabled={loading}>⚡ Re-run Batch</button>
+                <button className="btn btn-secondary btn-sm" onClick={resetSystem}>Reset & Clear</button>
+                <button className="btn btn-primary btn-sm" onClick={runBatch} disabled={loading}>Re-run Batch</button>
               </div>
             </div>
 
@@ -83,37 +83,31 @@ export default function BatchDashboard() {
                 <div className="metric-label">Total Processed</div>
                 <div className="metric-value">{batchResults.processed}</div>
                 <div className="metric-sub">of {batchResults.total} scenarios</div>
-                <div className="metric-icon">📦</div>
               </div>
               <div className="metric-card info stagger-2 animate-fade-in-up">
                 <div className="metric-label">New Reports</div>
                 <div className="metric-value">{batchResults.counts.NEW}</div>
                 <div className="metric-sub">first-time ingestions</div>
-                <div className="metric-icon">🆕</div>
               </div>
               <div className="metric-card stagger-3 animate-fade-in-up" style={{ '--accent': 'var(--duplicate)' }}>
                 <div className="metric-label">Duplicates</div>
                 <div className="metric-value" style={{ color: 'var(--duplicate)' }}>{batchResults.counts.DUPLICATE}</div>
                 <div className="metric-sub">skipped (idempotent)</div>
-                <div className="metric-icon">📋</div>
               </div>
               <div className="metric-card warning stagger-4 animate-fade-in-up">
                 <div className="metric-label">Revisions</div>
                 <div className="metric-value">{batchResults.counts.REVISION}</div>
                 <div className="metric-sub">version updates</div>
-                <div className="metric-icon">📝</div>
               </div>
               <div className="metric-card danger stagger-5 animate-fade-in-up">
                 <div className="metric-label">Conflicts</div>
                 <div className="metric-value">{batchResults.counts.CONFLICT}</div>
                 <div className="metric-sub">require review</div>
-                <div className="metric-icon">⚠️</div>
               </div>
               <div className="metric-card purple stagger-6 animate-fade-in-up">
                 <div className="metric-label">Tax-Cleaned</div>
                 <div className="metric-value">{batchResults.tax_cleaned.GENERATED}</div>
                 <div className="metric-sub">reports generated</div>
-                <div className="metric-icon">✦</div>
               </div>
             </div>
 
@@ -174,8 +168,8 @@ export default function BatchDashboard() {
                   <div className="flex justify-between items-center">
                     <span className="font-bold" style={{ fontSize: 20 }}>{data.total}</span>
                     <div className="flex gap-sm">
-                      <span className="text-xs" style={{ color: 'var(--success)' }}>✓{data.success}</span>
-                      {data.failed > 0 && <span className="text-xs" style={{ color: 'var(--error)' }}>✕{data.failed}</span>}
+                      <span className="text-xs font-bold" style={{ color: 'var(--state-success)' }}>{data.success}</span>
+                      {data.failed > 0 && <span className="text-xs font-bold" style={{ color: 'var(--state-error)' }}>{data.failed}</span>}
                     </div>
                   </div>
                 </div>
