@@ -143,7 +143,7 @@ export default function TaxReportDetailPage() {
 
                         {/* Account Overview */}
                         <div className="card">
-                            <h3 className="mb-md" style={{ fontSize: 15, fontWeight: 600 }}>Colmex Account Overview</h3>
+                            <h3 className="mb-md" style={{ fontSize: 15, fontWeight: 600 }}>Account Overview</h3>
                             <div className="metrics-grid" style={{ marginBottom: 0 }}>
                                 {[
                                     { label: 'Opening Balance', value: acctSummary?.opening_balance },

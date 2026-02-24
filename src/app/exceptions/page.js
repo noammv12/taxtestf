@@ -56,8 +56,8 @@ export default function ExceptionsPage() {
                 ) : exceptions.length === 0 && filter === 'ALL' ? (
                     <div className="batch-hero">
                         <h2>No Exceptions</h2>
-                        <p>Run the batch demo from the Dashboard to generate processing results</p>
-                        <Link href="/" className="btn btn-primary">Go to Dashboard</Link>
+                        <p>Upload and process reports to see exceptions here</p>
+                        <Link href="/upload" className="btn btn-primary">Go to Upload</Link>
                     </div>
                 ) : (
                     <>

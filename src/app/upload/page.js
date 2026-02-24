@@ -67,7 +67,7 @@ export default function UploadPage() {
                 <div className="page-header">
                     <div>
                         <h1>Upload Client Reports</h1>
-                        <p>Process Colmex Pro P&L JSON reports and generate Israeli tax-cleaned outputs</p>
+                        <p>Process client P&L JSON reports and generate Israeli tax-cleaned outputs</p>
                     </div>
                 </div>
 

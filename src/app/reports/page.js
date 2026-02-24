@@ -61,7 +61,7 @@ export default function TaxReportsPage() {
                 <div className="page-header">
                     <div>
                         <h1>Tax Reports</h1>
-                        <p>Israeli tax-cleaned reports for Colmex Pro clients</p>
+                        <p>Israeli tax-cleaned reports for all clients</p>
                     </div>
                     <Link href="/upload" className="btn btn-primary">Upload Reports</Link>
                 </div>

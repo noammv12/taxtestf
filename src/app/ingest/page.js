@@ -108,7 +108,7 @@ export default function IngestPage() {
             <div className="page-container">
                 <div className="page-header">
                     <h1>Ingest Report</h1>
-                    <p>Submit a single Colmex P&L report payload for processing</p>
+                    <p>Submit a single P&L report payload for processing</p>
                 </div>
 
                 <div className="grid-2" style={{ gridTemplateColumns: '1fr 1fr', gap: 24 }}>

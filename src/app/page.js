@@ -1,224 +1,218 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AppShell from '@/components/AppShell';
 import StateBadge from '@/components/StateBadge';
 import Link from 'next/link';
 
-export default function BatchDashboard() {
+export default function OverviewDashboard() {
+  const [reports, setReports] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [batchRunning, setBatchRunning] = useState(false);
   const [batchResults, setBatchResults] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+
+  const fetchData = async () => {
+    try {
+      const [reportsRes, clientsRes] = await Promise.all([
+        fetch('/api/reports'),
+        fetch('/api/clients'),
+      ]);
+      const reportsData = await reportsRes.json();
+      const clientsData = await clientsRes.json();
+      setReports(reportsData.reports || []);
+      setStats(reportsData.stats || null);
+      setClients(clientsData.clients || []);
+    } catch (err) {
+      console.error('Failed to fetch data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchData(); }, []);
 
   const runBatch = async () => {
-    setLoading(true);
-    setError(null);
+    setBatchRunning(true);
     try {
       const res = await fetch('/api/batch', { method: 'POST' });
-      if (!res.ok) throw new Error('Batch run failed');
+      if (!res.ok) throw new Error('Batch failed');
       const data = await res.json();
       setBatchResults(data);
+      await fetchData();
     } catch (err) {
-      setError(err.message);
+      console.error(err);
     }
-    setLoading(false);
+    setBatchRunning(false);
   };
 
   const resetSystem = async () => {
     await fetch('/api/reset', { method: 'POST' });
     setBatchResults(null);
-    setError(null);
+    setReports([]);
+    setStats(null);
+    setClients([]);
   };
 
-  const excCount = batchResults?.scenario_results?.filter(
-    s => ['CONFLICT', 'VALIDATION_FAILED', 'RECONCILIATION_MISMATCH', 'REVIEW_REQUIRED'].includes(s.overall_status)
-  ).length || 0;
+  const fmt = (val) => {
+    if (val === null || val === undefined) return '$0.00';
+    const sign = val < 0 ? '-' : '';
+    return `${sign}$${Math.abs(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  };
+
+  const hasData = reports.length > 0 || clients.length > 0;
+  const recentReports = reports.slice(0, 10);
+
+  if (loading) {
+    return <AppShell><div className="page-container"><div className="loading-spinner"><div className="spinner"></div> Loading...</div></div></AppShell>;
+  }
 
   return (
-    <AppShell exceptionCount={excCount}>
+    <AppShell>
       <div className="page-container">
         <div className="page-header">
-          <h1>Batch Operations Dashboard</h1>
-          <p>Ingest, validate, and reconcile the 50-scenario Colmex P&L demo pack</p>
+          <div>
+            <h1>Overview</h1>
+            <p>Tax operations dashboard</p>
+          </div>
+          {hasData && (
+            <div className="flex gap-sm">
+              <button className="btn btn-secondary" onClick={resetSystem}>Reset All Data</button>
+              <button className="btn btn-primary" onClick={runBatch} disabled={batchRunning}>
+                {batchRunning ? 'Processing...' : 'Run Demo Batch'}
+              </button>
+            </div>
+          )}
         </div>
 
-        {!batchResults && !loading && (
-          <div className="batch-hero animate-fade-in">
-            <h2>Run the 50-Scenario Demo Pack</h2>
-            <p>Process all scenarios through the complete pipeline: ingestion → client upsert → classification → validation → reconciliation → tax-cleaned generation</p>
-            <button className="btn btn-primary btn-lg" onClick={runBatch}>
-              Run Batch Processing
-            </button>
-          </div>
-        )}
+        {/* ═══ EMPTY STATE ═══ */}
+        {!hasData && !batchResults && (
+          <div className="animate-fade-in">
+            <div className="batch-hero" style={{ marginBottom: 24 }}>
+              <h2>Welcome to Clearly</h2>
+              <p>Get started by uploading client P&L reports or running the demo batch</p>
+            </div>
 
-        {loading && (
-          <div className="batch-hero animate-fade-in">
-            <div className="loading-spinner" style={{ justifyContent: 'center', fontSize: 16 }}>
-              <div className="spinner" style={{ width: 28, height: 28 }}></div>
-              Processing 50 scenarios...
+            <div className="grid-2">
+              <div className="card" style={{ padding: 32, textAlign: 'center' }}>
+                <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.6 }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                </div>
+                <h3 style={{ marginBottom: 8, fontSize: 16 }}>Upload Client Reports</h3>
+                <p className="text-sm text-muted" style={{ marginBottom: 16 }}>
+                  Process P&L JSON files and generate Israeli tax-cleaned reports
+                </p>
+                <Link href="/upload" className="btn btn-primary">Go to Upload</Link>
+              </div>
+
+              <div className="card" style={{ padding: 32, textAlign: 'center' }}>
+                <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.6 }}>
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                </div>
+                <h3 style={{ marginBottom: 8, fontSize: 16 }}>Run 50-Client Demo</h3>
+                <p className="text-sm text-muted" style={{ marginBottom: 16 }}>
+                  Process the full demo pack through the complete pipeline
+                </p>
+                <button className="btn btn-primary" onClick={runBatch} disabled={batchRunning}>
+                  {batchRunning ? <><div className="spinner" style={{ width: 14, height: 14 }}></div> Processing...</> : 'Run Demo'}
+                </button>
+              </div>
             </div>
           </div>
         )}
 
-        {error && (
-          <div className="notification-banner error animate-slide-in">
-            ✕ {error}
-          </div>
-        )}
-
-        {batchResults && (
+        {/* ═══ DASHBOARD — DATA EXISTS ═══ */}
+        {hasData && (
           <>
             {/* Summary Metrics */}
-            <div className="section-header">
-              <h2>Processing Summary</h2>
-              <div className="flex gap-sm">
-                <button className="btn btn-secondary btn-sm" onClick={resetSystem}>Reset & Clear</button>
-                <button className="btn btn-primary btn-sm" onClick={runBatch} disabled={loading}>Re-run Batch</button>
-              </div>
-            </div>
-
             <div className="metrics-grid animate-fade-in">
-              <div className="metric-card accent stagger-1 animate-fade-in-up">
-                <div className="metric-label">Total Processed</div>
-                <div className="metric-value">{batchResults.processed}</div>
-                <div className="metric-sub">of {batchResults.total} scenarios</div>
+              <div className="metric-card">
+                <div className="metric-label">Total Clients</div>
+                <div className="metric-value">{clients.length}</div>
+                <div className="metric-sub">registered accounts</div>
               </div>
-              <div className="metric-card info stagger-2 animate-fade-in-up">
-                <div className="metric-label">New Reports</div>
-                <div className="metric-value">{batchResults.counts.NEW}</div>
-                <div className="metric-sub">first-time ingestions</div>
+              <div className="metric-card">
+                <div className="metric-label">Tax Reports</div>
+                <div className="metric-value">{stats?.total || 0}</div>
+                <div className="metric-sub">{stats?.approved || 0} approved</div>
               </div>
-              <div className="metric-card stagger-3 animate-fade-in-up" style={{ '--accent': 'var(--duplicate)' }}>
-                <div className="metric-label">Duplicates</div>
-                <div className="metric-value" style={{ color: 'var(--duplicate)' }}>{batchResults.counts.DUPLICATE}</div>
-                <div className="metric-sub">skipped (idempotent)</div>
+              <div className="metric-card warning">
+                <div className="metric-label">Pending Review</div>
+                <div className="metric-value">{(stats?.draft || 0) + (stats?.needs_review || 0)}</div>
+                <div className="metric-sub">{stats?.draft || 0} draft, {stats?.needs_review || 0} flagged</div>
               </div>
-              <div className="metric-card warning stagger-4 animate-fade-in-up">
-                <div className="metric-label">Revisions</div>
-                <div className="metric-value">{batchResults.counts.REVISION}</div>
-                <div className="metric-sub">version updates</div>
-              </div>
-              <div className="metric-card danger stagger-5 animate-fade-in-up">
-                <div className="metric-label">Conflicts</div>
-                <div className="metric-value">{batchResults.counts.CONFLICT}</div>
-                <div className="metric-sub">require review</div>
-              </div>
-              <div className="metric-card purple stagger-6 animate-fade-in-up">
-                <div className="metric-label">Tax-Cleaned</div>
-                <div className="metric-value">{batchResults.tax_cleaned.GENERATED}</div>
-                <div className="metric-sub">reports generated</div>
+              <div className="metric-card" style={{ background: 'var(--accent-soft)' }}>
+                <div className="metric-label" style={{ color: 'var(--accent)', fontWeight: 600 }}>Total Tax Liability</div>
+                <div className="metric-value" style={{ color: 'var(--accent)', fontSize: 22 }}>{fmt(stats?.total_tax_liability)}</div>
+                <div className="metric-sub">across all clients</div>
               </div>
             </div>
 
-            {/* Pass Rate Bars */}
-            <div className="grid-3 mb-lg animate-fade-in">
-              <div className="card">
-                <div className="flex justify-between items-center mb-sm">
-                  <span className="text-sm font-bold">Validation Pass Rate</span>
-                  <span className="text-sm" style={{ color: 'var(--success)' }}>
-                    {batchResults.processed > 0 ? Math.round((batchResults.validation.VALIDATED / (batchResults.processed - batchResults.validation.SKIPPED)) * 100) || 0 : 0}%
-                  </span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-fill success" style={{ width: `${batchResults.processed > 0 ? ((batchResults.validation.VALIDATED / (batchResults.processed - batchResults.validation.SKIPPED)) * 100) || 0 : 0}%` }}></div>
-                </div>
-                <div className="text-xs text-muted mt-sm">
-                  {batchResults.validation.VALIDATED} validated • {batchResults.validation.FAILED} failed • {batchResults.validation.REVIEW_REQUIRED} review
-                </div>
-              </div>
-
-              <div className="card">
-                <div className="flex justify-between items-center mb-sm">
-                  <span className="text-sm font-bold">Reconciliation Pass Rate</span>
-                  <span className="text-sm" style={{ color: 'var(--success)' }}>
-                    {batchResults.processed > 0 ? Math.round((batchResults.reconciliation.RECONCILED / (batchResults.processed - batchResults.reconciliation.SKIPPED)) * 100) || 0 : 0}%
-                  </span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-fill success" style={{ width: `${batchResults.processed > 0 ? ((batchResults.reconciliation.RECONCILED / (batchResults.processed - batchResults.reconciliation.SKIPPED)) * 100) || 0 : 0}%` }}></div>
-                </div>
-                <div className="text-xs text-muted mt-sm">
-                  {batchResults.reconciliation.RECONCILED} reconciled • {batchResults.reconciliation.MISMATCH} mismatch • {batchResults.reconciliation.PARTIAL} partial
-                </div>
-              </div>
-
-              <div className="card">
-                <div className="flex justify-between items-center mb-sm">
-                  <span className="text-sm font-bold">Runtime</span>
-                  <span className="text-sm font-mono" style={{ color: 'var(--accent)' }}>{batchResults.runtime_ms}ms</span>
-                </div>
-                <div className="progress-bar">
-                  <div className="progress-fill success" style={{ width: '100%' }}></div>
-                </div>
-                <div className="text-xs text-muted mt-sm">
-                  Avg {Math.round(batchResults.runtime_ms / batchResults.processed)}ms per scenario
-                </div>
-              </div>
-            </div>
-
-            {/* Group Breakdown */}
-            <div className="section-header">
-              <h2>Scenario Group Breakdown</h2>
-            </div>
-            <div className="grid-5 mb-lg animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12 }}>
-              {Object.entries(batchResults.groups).map(([group, data]) => (
-                <div className="card" key={group} style={{ padding: 16 }}>
-                  <div className="text-xs text-muted mb-sm" style={{ fontWeight: 600 }}>{group.replace(/_/g, ' ').toUpperCase()}</div>
-                  <div className="flex justify-between items-center">
-                    <span className="font-bold" style={{ fontSize: 20 }}>{data.total}</span>
-                    <div className="flex gap-sm">
-                      <span className="text-xs font-bold" style={{ color: 'var(--state-success)' }}>{data.success}</span>
-                      {data.failed > 0 && <span className="text-xs font-bold" style={{ color: 'var(--state-error)' }}>{data.failed}</span>}
-                    </div>
+            {/* Batch Results - if just ran */}
+            {batchResults && (
+              <div className="card mb-md animate-fade-in">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="font-bold">Batch Complete</span>
+                    <span className="text-sm text-muted" style={{ marginLeft: 12 }}>
+                      {batchResults.processed} processed in {batchResults.runtime_ms}ms
+                    </span>
+                  </div>
+                  <div className="flex gap-sm">
+                    <StateBadge state="SUCCESS" />
+                    <span className="text-sm font-bold">{batchResults.counts?.NEW || 0} new</span>
+                    {batchResults.counts?.DUPLICATE > 0 && <span className="text-sm text-muted">{batchResults.counts.DUPLICATE} duplicates</span>}
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {/* Per-Scenario Drill-Down Table */}
-            <div className="section-header">
-              <h2>Per-Scenario Results</h2>
-              <span className="text-xs text-muted">{batchResults.scenario_results.length} scenarios</span>
-            </div>
-            <div className="table-container animate-fade-in">
-              <div className="table-scroll" style={{ maxHeight: 600 }}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Scenario</th>
-                      <th>Title</th>
-                      <th>Group</th>
-                      <th>Account</th>
-                      <th>Client Action</th>
-                      <th>Report State</th>
-                      <th>Validation</th>
-                      <th>Reconciliation</th>
-                      <th>Tax-Cleaned</th>
-                      <th>Overall</th>
-                      <th className="number">Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {batchResults.scenario_results.map(s => (
-                      <tr key={s.id} className={s.account_id ? 'clickable' : ''} onClick={() => s.account_id && window.open(`/clients/${s.account_id}`, '_self')}>
-                        <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{s.id}</td>
-                        <td style={{ maxWidth: 260 }} className="truncate">{s.title}</td>
-                        <td><span className="text-xs text-muted">{s.group?.split('_').slice(1).join(' ')}</span></td>
-                        <td style={{ fontFamily: 'monospace', fontSize: 11 }}>{s.account_id}</td>
-                        <td><StateBadge state={s.client_action} /></td>
-                        <td><StateBadge state={s.report_state} /></td>
-                        <td><StateBadge state={s.validation_status} /></td>
-                        <td><StateBadge state={s.reconciliation_status} /></td>
-                        <td><StateBadge state={s.tax_cleaned_status} /></td>
-                        <td><StateBadge state={s.overall_status} /></td>
-                        <td className="number font-mono text-xs">{s.processing_time_ms}ms</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
               </div>
-            </div>
+            )}
+
+            {/* Recent Reports */}
+            {recentReports.length > 0 && (
+              <div className="table-container animate-fade-in">
+                <div className="table-header">
+                  <h3>Recent Tax Reports</h3>
+                  <Link href="/reports" className="btn btn-secondary" style={{ fontSize: 13, padding: '4px 14px' }}>View All Reports</Link>
+                </div>
+                <div className="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Report</th>
+                        <th>Account</th>
+                        <th>Client</th>
+                        <th>Year</th>
+                        <th className="number">Net P&L</th>
+                        <th className="number">Tax Liability</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentReports.map(r => {
+                        const pnl = r.tax_data?.annual_summary?.net_taxable_pnl;
+                        const tax = r.tax_data?.annual_summary?.computed_tax_liability;
+                        return (
+                          <tr key={r.id} className="clickable" onClick={() => window.location.href = `/reports/${r.id}`}>
+                            <td className="font-mono text-xs" style={{ color: 'var(--accent)' }}>{r.id}</td>
+                            <td style={{ fontFamily: 'monospace', fontWeight: 600 }}>{r.account_id}</td>
+                            <td className="font-bold">{r.client_name}</td>
+                            <td>{r.year}</td>
+                            <td className="number font-mono font-bold" style={{ color: pnl < 0 ? 'var(--negative)' : 'var(--positive)' }}>
+                              {fmt(pnl)}
+                            </td>
+                            <td className="number font-mono font-bold" style={{ color: tax > 0 ? 'var(--accent)' : undefined }}>
+                              {fmt(tax)}
+                            </td>
+                            <td><StateBadge state={r.status} /></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
